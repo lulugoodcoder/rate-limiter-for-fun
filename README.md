@@ -7,7 +7,8 @@ in order for below to work, need to first deploy everything in https://github.co
 ```
 sam build
 ```
-``
+
+```
 sam deploy   --stack-name rate-limiter-sam   --resolve-s3   --parameter-overrides     RedisEndpoint=rate-limit-valkey-ifklzy.serverless.usw2.cache.amazonaws.com     RedisPort=6379     Subnet1=subnet-0cee86b345a8e194a     Subnet2=subnet-0fc1f52ffb2acc7bf     LambdaSG=sg-0c37a54ff5c9f4f13   --capabilities CAPABILITY_IAM
 ```
 
