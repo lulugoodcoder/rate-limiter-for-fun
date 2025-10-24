@@ -1,5 +1,7 @@
 # rate-limiter
 
+in order for below to work, need to first deploy everything in https://github.com/lulugoodcoder/rate-limiter-for-cdk
+
 ## Deploy the  application
 
 ```
