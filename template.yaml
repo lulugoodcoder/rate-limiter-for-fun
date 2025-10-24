@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Rate limiter Lambdas (3 functions) that talk to ElastiCache (Redis/Valkey)
+
+Parameters:
+  RedisEndpoint:
+    Type: String
+    Description: Redis endpoint (from CDK)
+  RedisPort:
+    Type: Number
+    Description: Redis port (from CDK)
+  Subnet1:
+    Type: String
+  Subnet2:
+    Type: String
+  LambdaSG:
+    Type: String
+    Description: Security group id for Lambda (from CDK)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 256
+
+Resources:
+  UpdateTierFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update-tier
+      CodeUri: update_tier/
+      Handler: app.lambda_handler
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !Ref LambdaSG
+      Environment:
+        Variables:
+          REDIS_HOST: !Ref RedisEndpoint
+          REDIS_PORT: !Ref RedisPort
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /update-tier
+            Method: post
+
+  UpdateRulesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update-rules
+      CodeUri: update_rules/
+      Handler: app.lambda_handler
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !Ref LambdaSG
+      Environment:
+        Variables:
+          REDIS_HOST: !Ref RedisEndpoint
+          REDIS_PORT: !Ref RedisPort
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /update-rules
+            Method: post
+
+  ConsumeTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: consume-token
+      CodeUri: consume_token/
+      Handler: app.lambda_handler
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !Ref LambdaSG
+      Environment:
+        Variables:
+          REDIS_HOST: !Ref RedisEndpoint
+          REDIS_PORT: !Ref RedisPort
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /consume
+            Method: post
+
+Outputs:
+  UpdateTierApi:
+    Description: Update tier endpoint
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/update-tier/"
+
+  UpdateRulesApi:
+    Description: Update rules endpoint
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/update-rules/"
+
+  ConsumeApi:
+    Description: Consume (rate limit) endpoint
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/consume/"
